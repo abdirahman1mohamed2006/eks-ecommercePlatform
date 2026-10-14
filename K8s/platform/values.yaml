@@ -1,0 +1,82 @@
+# Deployment Configuration
+replicaCount: 3
+
+images:
+  api-gateway:
+    image: ""
+    pullPolicy: IfNotPresent
+  dashboard-api:
+    image: ""
+    pullPolicy: IfNotPresent
+  inventory-service:
+    image: ""
+    pullPolicy: IfNotPresent
+  notification-service:
+    image: ""
+    pullPolicy: IfNotPresent
+  order-service:
+    image: ""
+    pullPolicy: IfNotPresent
+  payment-service:
+    image: ""
+    pullPolicy: IfNotPresent
+  scheduler:
+    image: ""
+    pullPolicy: IfNotPresent
+  shipping-service:
+    image: ""
+    pullPolicy: IfNotPresent
+  worker:
+    image: ""
+    pullPolicy: IfNotPresent
+
+# Per-service IAM role ARNs for workloads that access SQS.
+serviceAccounts:
+  api-gateway: {}
+  dashboard-api: {}
+  inventory-service: {}
+  notification-service: {}
+  order-service:
+    roleArn: "arn:aws:iam::123456789012:role/order-role"
+  payment-service:
+    roleArn: "arn:aws:iam::123456789012:role/payment-role"
+  scheduler: {}
+  shipping-service:
+    roleArn: "arn:aws:iam::123456789012:role/shipping-role"
+  worker:
+    roleArn: "arn:aws:iam::123456789012:role/worker-role"
+
+resources: {}
+
+database:
+  urlSecretName: postgres-credentials
+  urlSecretKey: DATABASE_URL
+
+aws:
+  region: ""
+
+sqs:
+  queueUrl: ""
+
+# Service Configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+# Ingress Configuration
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    external-dns.alpha.kubernetes.io/hostname: "abdirahman.forum"
+  hosts:
+    - host: abdirahman.forum
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: abdirahman-forum-tls
+      hosts:
+        - abdirahman.forum

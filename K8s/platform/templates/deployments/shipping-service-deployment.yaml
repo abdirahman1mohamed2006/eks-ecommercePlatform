@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: shipping-service
+	labels:
+		app.kubernetes.io/name: shipping-service
+spec:
+	replicas: {{ .Values.replicaCount }}
+	selector:
+		matchLabels:
+			app.kubernetes.io/name: shipping-service
+	template:
+		metadata:
+			labels:
+				app.kubernetes.io/name: shipping-service
+		spec:
+			serviceAccountName: {{ printf "%s-%s" .Release.Name "shipping-service" | trunc 63 | trimSuffix "-" }}
+			containers:
+				- name: shipping-service
+					image: {{ index .Values.images "shipping-service" "image" | quote }}
+					imagePullPolicy: {{ index .Values.images "shipping-service" "pullPolicy" }}
+					ports:
+						- name: http
+							containerPort: 8085
+							protocol: TCP
+					env:
+						- name: DATABASE_URL
+							valueFrom:
+								secretKeyRef:
+									name: {{ .Values.database.urlSecretName }}
+									key: {{ .Values.database.urlSecretKey }}
+						- name: SQS_QUEUE_URL
+							value: {{ .Values.sqs.queueUrl | quote }}
+						- name: AWS_REGION
+							value: {{ .Values.aws.region | quote }}
+					startupProbe:
+						httpGet:
+							path: /healthz
+							port: http
+						periodSeconds: 10
+						failureThreshold: 30
+					readinessProbe:
+						httpGet:
+							path: /healthz
+							port: http
+						periodSeconds: 10
+					livenessProbe:
+						httpGet:
+							path: /livez
+							port: http
+						periodSeconds: 20

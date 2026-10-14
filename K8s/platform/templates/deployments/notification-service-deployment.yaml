@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: notification-service
+	labels:
+		app.kubernetes.io/name: notification-service
+spec:
+	replicas: {{ .Values.replicaCount }}
+	selector:
+		matchLabels:
+			app.kubernetes.io/name: notification-service
+	template:
+		metadata:
+			labels:
+				app.kubernetes.io/name: notification-service
+		spec:
+			serviceAccountName: {{ printf "%s-%s" .Release.Name "notification-service" | trunc 63 | trimSuffix "-" }}
+			containers:
+				- name: notification-service
+					image: {{ index .Values.images "notification-service" "image" | quote }}
+					imagePullPolicy: {{ index .Values.images "notification-service" "pullPolicy" }}
+					ports:
+						- name: http
+							containerPort: 8084
+							protocol: TCP
+					env:
+						- name: DATABASE_URL
+							valueFrom:
+								secretKeyRef:
+									name: {{ .Values.database.urlSecretName }}
+									key: {{ .Values.database.urlSecretKey }}
+					startupProbe:
+						httpGet:
+							path: /healthz
+							port: http
+						periodSeconds: 10
+						failureThreshold: 30
+					readinessProbe:
+						httpGet:
+							path: /healthz
+							port: http
+						periodSeconds: 10
+					livenessProbe:
+						httpGet:
+							path: /livez
+							port: http
+						periodSeconds: 20

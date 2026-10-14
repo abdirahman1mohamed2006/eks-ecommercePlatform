@@ -1,0 +1,41 @@
+name: Destroy Terraform Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: "Type DESTROY to confirm infrastructure deletion"
+        required: true
+        type: string
+
+
+permissions:
+  id-token: write
+  contents: read
+  
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  destroy:
+    runs-on: ubuntu-24.04
+    if: ${{ github.ref == 'refs/heads/master' && github.event.inputs.confirm_destroy == 'DESTROY' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: Terraform destroy
+        uses: dflook/terraform-destroy@v2
+        with:
+          path: terraform
+          auto_approve: true

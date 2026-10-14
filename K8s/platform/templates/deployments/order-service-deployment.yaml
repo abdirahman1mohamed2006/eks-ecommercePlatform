@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: order-service
+	labels:
+		app.kubernetes.io/name: order-service
+spec:
+	replicas: {{ .Values.replicaCount }}
+	selector:
+		matchLabels:
+			app.kubernetes.io/name: order-service
+	template:
+		metadata:
+			labels:
+				app.kubernetes.io/name: order-service
+		spec:
+			serviceAccountName: {{ printf "%s-%s" .Release.Name "order-service" | trunc 63 | trimSuffix "-" }}
+			containers:
+				- name: order-service
+					image: {{ index .Values.images "order-service" "image" | quote }}
+					imagePullPolicy: {{ index .Values.images "order-service" "pullPolicy" }}
+					ports:
+						- name: http
+							containerPort: 8081
+							protocol: TCP
+					env:
+						- name: DATABASE_URL
+							valueFrom:
+								secretKeyRef:
+									name: {{ .Values.database.urlSecretName }}
+									key: {{ .Values.database.urlSecretKey }}
+						- name: SQS_QUEUE_URL
+							value: {{ .Values.sqs.queueUrl | quote }}
+						- name: AWS_REGION
+							value: {{ .Values.aws.region | quote }}
+					startupProbe:
+						httpGet:
+							path: /healthz
+							port: http
+						periodSeconds: 10
+						failureThreshold: 30
+					readinessProbe:
+						httpGet:
+							path: /healthz
+							port: http
+						periodSeconds: 10
+					livenessProbe:
+						httpGet:
+							path: /livez
+							port: http
+						periodSeconds: 20

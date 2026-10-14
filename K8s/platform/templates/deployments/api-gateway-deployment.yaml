@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "my-app.fullname" . }}
+  labels:
+    {{- include "my-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "my-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "my-app.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ printf "%s-%s" .Release.Name "api-gateway" | trunc 63 | trimSuffix "-" }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ index .Values.images "api-gateway" "image" | quote }}
+          imagePullPolicy: {{ index .Values.images "api-gateway" "pullPolicy" }}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}

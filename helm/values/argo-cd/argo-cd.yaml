@@ -1,0 +1,22 @@
+global:
+  domain: argocd.abdirahman.forum
+
+server:
+  service:
+    type: ClusterIP
+
+  extraArgs:
+    - --insecure
+
+  ingress:
+    enabled: true
+    ingressClassName: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: "letsencrypt-prod"
+      nginx.org/hosts: "false"
+    hosts:
+      - argocd.abdirahman.forum
+    tls:
+      - secretName: argocd-server-tls
+        hosts:
+          - argocd.abdirahman.forum

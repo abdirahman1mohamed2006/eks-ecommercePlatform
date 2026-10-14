@@ -1,0 +1,83 @@
+name: Build and Push to ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      docker_push:
+        description: "Type yes to push the image"
+        required: true
+        type: string
+ 
+
+    
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  build-and-push:
+    name: Build and Push
+    runs-on: ubuntu-24.04
+    if: ${{ github.event.inputs.docker_push == 'yes' }}
+
+  
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+  
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+            role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+            aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build application images with Compose
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker compose -f ./eks-v2/docker-compose.yml build --no-cache \
+            api-gateway dashboard-api inventory-service notification-service \
+            order-service payment-service scheduler shipping-service worker
+
+      - name: Run Trivy vulnerability scanner
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          for service in api-gateway dashboard-api inventory-service notification-service order-service payment-service scheduler shipping-service worker; do
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v "$PWD:/work" \
+              aquasec/trivy:0.58.2 image \
+              --exit-code 1 \
+              --severity CRITICAL,HIGH \
+              --format template \
+              --template '@/contrib/sarif.tpl' \
+              --output "/work/trivy-${service}.sarif" \
+              "$ECR_REGISTRY/${service}:${IMAGE_TAG}"
+          done
+
+      - name: Push application images to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker compose -f ./eks-v2/docker-compose.yml push \
+            api-gateway dashboard-api inventory-service notification-service \
+            order-service payment-service scheduler shipping-service worker
+
+          for service in api-gateway dashboard-api inventory-service notification-service order-service payment-service scheduler shipping-service worker; do
+            docker tag "$ECR_REGISTRY/${service}:${IMAGE_TAG}" "$ECR_REGISTRY/${service}:latest"
+            docker push "$ECR_REGISTRY/${service}:latest"
+          done
