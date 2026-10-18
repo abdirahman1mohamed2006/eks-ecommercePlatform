@@ -28,11 +28,13 @@ variable "tags" {
 variable "github_owner" {
 	description = "GitHub user or organization that owns the deployment repository."
 	type        = string
+	default     = "abdirahman1mohamed2006"
 }
 
 variable "github_repository" {
 	description = "GitHub repository name allowed to assume the deploy role."
 	type        = string
+	default     = "eks-ecommercePlatform"
 }
 
 variable "github_branch" {

@@ -41,4 +41,4 @@ cainjector:
       memory: 128Mi
 
 prometheus:
-  enabled: false 
+  enabled: false  
