@@ -80,3 +80,53 @@ resource "aws_iam_role_policy_attachment" "github_actions" {
   role       = aws_iam_role.github_actions_deploy.name
   policy_arn = each.value
 }
+
+resource "aws_iam_policy" "github_actions_terraform" {
+  name        = "github-actions-terraform"
+  description = "Permissions for the GitHub Actions role to plan and apply the EKS platform Terraform."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "PlatformServices"
+        Effect = "Allow"
+        Action = [
+          "ec2:*",
+          "eks:*",
+          "ecr:*",
+          "sqs:*",
+          "kms:*",
+          "logs:*",
+          "iam:*",
+          "route53:*",
+          "elasticloadbalancing:*",
+          "autoscaling:Describe*",
+          "sts:GetCallerIdentity",
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "TerraformStateBucket"
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+        ]
+        Resource = [
+          aws_s3_bucket.tf_state.arn,
+          "${aws_s3_bucket.tf_state.arn}/*",
+        ]
+      },
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "github_actions_terraform" {
+  role       = aws_iam_role.github_actions_deploy.name
+  policy_arn = aws_iam_policy.github_actions_terraform.arn
+}
