@@ -84,8 +84,3 @@ jobs:
           docker compose -f ./eks-v2/docker-compose.yml push \
             api-gateway dashboard-api inventory-service notification-service \
             order-service payment-service scheduler shipping-service worker
-
-          for service in api-gateway dashboard-api inventory-service notification-service order-service payment-service scheduler shipping-service worker; do
-            docker tag "$ECR_REGISTRY/${service}:${IMAGE_TAG}" "$ECR_REGISTRY/${service}:latest"
-            docker push "$ECR_REGISTRY/${service}:latest"
-          done

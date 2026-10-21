@@ -48,10 +48,20 @@ variable "node_group_role_arn" {
   type        = string
 }
 
+variable "api_allowed_cidrs" {
+  description = "CIDRs allowed to reach the public EKS API endpoint."
+  type        = list(string)
+
+  validation {
+    condition     = length(var.api_allowed_cidrs) > 0 && !contains(var.api_allowed_cidrs, "0.0.0.0/0")
+    error_message = "Provide at least one CIDR and do not use 0.0.0.0/0."
+  }
+}
+
 variable "tags" {
   description = "Tags to apply to the EKS cluster and node group."
   type        = map(string)
-  default     = {
+  default = {
     Project     = "eks-v2"
     Environment = "sandbox"
     ManagedBy   = "Terraform"

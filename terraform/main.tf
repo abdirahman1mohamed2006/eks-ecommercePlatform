@@ -60,6 +60,7 @@ module "eks" {
   source = "./modules/EKS"
 
   cluster_name              = var.cluster_name
+  api_allowed_cidrs         = var.api_allowed_cidrs
   cluster_role_arn          = aws_iam_role.eks_cluster.arn
   node_group_role_arn       = aws_iam_role.eks_nodes.arn
   private_subnet_ids        = module.vpc.private_subnet_ids
@@ -84,16 +85,16 @@ module "route53" {
 module "iam" {
   source = "./modules/IAM"
 
-  cluster_name          = var.cluster_name
-  oidc_provider_arn     = module.eks.oidc_provider_arn
-  oidc_issuer_url       = module.eks.oidc_issuer_url
+  cluster_name      = var.cluster_name
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_issuer_url   = module.eks.oidc_issuer_url
 
   worker_namespace                   = var.kubernetes_namespace
   worker_service_account_name        = "${var.helm_release_name}-worker"
   worker_sqs_queue_arns              = [module.sqs.queue_arn]
   order_service_namespace            = var.kubernetes_namespace
   order_service_service_account_name = "${var.helm_release_name}-order-service"
-  order_service_sqs_queue_arns        = [module.sqs.queue_arn]
+  order_service_sqs_queue_arns       = [module.sqs.queue_arn]
   payments_namespace                 = var.kubernetes_namespace
   payments_service_account_name      = "${var.helm_release_name}-payment-service"
   payments_sqs_queue_arns            = [module.sqs.queue_arn]

@@ -1,9 +1,33 @@
+resource "aws_kms_key" "eks_secrets" {
+  description             = "Envelope encryption for ${var.cluster_name} Kubernetes secrets"
+  enable_key_rotation     = true
+  deletion_window_in_days = 7
+
+  tags = var.tags
+}
+
+resource "aws_kms_alias" "eks_secrets" {
+  name          = "alias/${var.cluster_name}-secrets"
+  target_key_id = aws_kms_key.eks_secrets.key_id
+}
+
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = var.cluster_role_arn
 
   vpc_config {
-    subnet_ids = var.private_subnet_ids
+    subnet_ids              = var.private_subnet_ids
+    endpoint_private_access = true
+    endpoint_public_access  = true
+    public_access_cidrs     = var.api_allowed_cidrs
+  }
+
+  encryption_config {
+    resources = ["secrets"]
+
+    provider {
+      key_arn = aws_kms_key.eks_secrets.arn
+    }
   }
 
   enabled_cluster_log_types = [
@@ -65,7 +89,7 @@ resource "aws_eks_node_group" "this" {
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "general-purpose"
   node_role_arn   = var.node_group_role_arn
-  subnet_ids = var.private_subnet_ids
+  subnet_ids      = var.private_subnet_ids
 
   scaling_config {
     desired_size = var.node_group_desired_size

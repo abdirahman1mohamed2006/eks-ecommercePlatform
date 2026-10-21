@@ -34,7 +34,7 @@ resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.4.0/24"
   availability_zone       = local.availability_zones[0]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = {
     Name                     = "eks-lab-public-1"
@@ -49,7 +49,7 @@ resource "aws_subnet" "public_2" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.5.0/24"
   availability_zone       = local.availability_zones[1]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = {
     Name                     = "eks-lab-public-2"
@@ -64,7 +64,7 @@ resource "aws_subnet" "public_3" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.6.0/24"
   availability_zone       = local.availability_zones[2]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = {
     Name                     = "eks-lab-public-3"
