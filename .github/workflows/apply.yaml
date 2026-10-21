@@ -14,6 +14,7 @@ permissions:
 
 env:
   AWS_REGION: eu-west-2
+  TF_VAR_api_allowed_cidrs: '["${{ vars.API_ALLOWED_IP }}/32"]'
 
 concurrency:
   group: terraform-apply-${{ github.ref }}

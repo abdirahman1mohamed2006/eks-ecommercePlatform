@@ -18,8 +18,9 @@ resource "aws_eks_cluster" "this" {
   vpc_config {
     subnet_ids              = var.private_subnet_ids
     endpoint_private_access = true
-    endpoint_public_access  = true
-    public_access_cidrs     = var.api_allowed_cidrs
+    #trivy:ignore:AWS-0040 Public endpoint is intentional and restricted to api_allowed_cidrs
+    endpoint_public_access = true
+    public_access_cidrs    = var.api_allowed_cidrs
   }
 
   encryption_config {
