@@ -7,6 +7,7 @@ variable "aws_region" {
 variable "api_allowed_cidrs" {
   description = "CIDRs allowed to reach the public EKS API endpoint, e.g. [\"203.0.113.7/32\"]."
   type        = list(string)
+  default     = ["78.145.36.186/32"]
 }
 
 variable "cluster_name" {
