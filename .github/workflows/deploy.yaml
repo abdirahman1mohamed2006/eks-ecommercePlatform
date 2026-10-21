@@ -68,6 +68,14 @@ jobs:
               "$ECR_REGISTRY/${service}:${IMAGE_TAG}"
           done
 
+      - name: Upload Trivy reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: trivy-*.sarif
+          if-no-files-found: ignore
+
       - name: Push application images to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
